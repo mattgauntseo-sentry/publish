@@ -9,7 +9,7 @@ jobs:
     if: github.event.label.name == 'accepted' && github.event.issue.state == 'open'
     timeout-minutes: 60
     env:
-      SENTRY_DSN: "https://303a687befb64dc2b40ce4c96de507c5@o1.ingest.sentry.io/6183838"
+      SENTRY_DSN: "https://dea39b3414ec43789acaaae866f5b559@o1296550.ingest.sentry.io/6707268"
     steps:
       - name: Get repo contents
         uses: actions/checkout@v2
