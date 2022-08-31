@@ -23,127 +23,119 @@ jobs:
           cache: yarn
           cache-dependency-path: .__publish__/yarn.lock
 
-      - name: Install Sentry SDK
-        run: yarn add @sentry/node@6
-
       - name: Parse and set inputs
-        id: inputs
-        uses: actions/github-script@v5
-        with:
-          script: |
-            const inputs = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/inputs.js`).default;
-            return await inputs({context});
+        run: node .__publish__/src/publish/inputs.js
 
-      - name: Inform start
-        if: steps.inputs.outcome == 'success'
-        uses: actions/github-script@v5
-        env:
-          PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
-        with:
-          script: |
-            const start = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/start.js`).default;
-            return await start({context, github});
+      #- name: Inform start
+      #  if: steps.inputs.outcome == 'success'
+      #  uses: actions/github-script@v5
+      #  env:
+      #    PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    script: |
+      #      const start = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/start.js`).default;
+      #      return await start({context, github});
 
-      - uses: actions/checkout@v2
-        name: Check out target repo
-        if: ${{ steps.inputs.outputs.result }}
-        with:
-          path: __repo__
-          repository: getsentry/${{ fromJSON(steps.inputs.outputs.result).repo }}
-          token: ${{ secrets.GH_SENTRY_BOT_PAT }}
-          fetch-depth: 0
+      #- uses: actions/checkout@v2
+      #  name: Check out target repo
+      #  if: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    path: __repo__
+      #    repository: getsentry/${{ fromJSON(steps.inputs.outputs.result).repo }}
+      #    token: ${{ secrets.GH_SENTRY_BOT_PAT }}
+      #    fetch-depth: 0
 
-      - name: Set targets
-        shell: bash
-        if: fromJSON(steps.inputs.outputs.result).targets
-        run: >
-          jq -n --argjson
-          source '${{ toJSON(fromJSON(steps.inputs.outputs.result).targets) }}'
-          '[{($source[]): true }] | add | {"published": (. // {}) }'
-          > __repo__/.craft-publish-${{ fromJSON(steps.inputs.outputs.result).version }}.json
+      #- name: Set targets
+      #  shell: bash
+      #  if: fromJSON(steps.inputs.outputs.result).targets
+      #  run: >
+      #    jq -n --argjson
+      #    source '${{ toJSON(fromJSON(steps.inputs.outputs.result).targets) }}'
+      #    '[{($source[]): true }] | add | {"published": (. // {}) }'
+      #    > __repo__/.craft-publish-${{ fromJSON(steps.inputs.outputs.result).version }}.json
 
-      - uses: docker://getsentry/craft:latest
-        name: Publish using Craft
-        with:
-          entrypoint: /bin/bash
-          args: >-
-            -e
-            -c "
-            cd __repo__/${{ fromJSON(steps.inputs.outputs.result).path }};
-            exec craft publish ${{ fromJSON(steps.inputs.outputs.result).version }};
-            "
-        env:
-          CRAFT_MERGE_TARGET: ${{ fromJSON(steps.inputs.outputs.result).merge_target }}
-          CRAFT_LOG_LEVEL: ${{ secrets.CRAFT_LOG_LEVEL }}
-          CRAFT_DRY_RUN: ${{ fromJSON(steps.inputs.outputs.result).dry_run }}
-          GIT_COMMITTER_NAME: getsentry-bot
-          GIT_AUTHOR_NAME: getsentry-bot
-          EMAIL: bot@getsentry.com
-          GITHUB_API_TOKEN: ${{ secrets.GH_SENTRY_BOT_PAT }}
-          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-          CRAFT_GCS_TARGET_CREDS_JSON: ${{ secrets.CRAFT_GCS_TARGET_CREDS_JSON }}
-          CRAFT_GCS_STORE_CREDS_JSON: ${{ secrets.CRAFT_GCS_STORE_CREDS_JSON }}
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-          DOCKER_USERNAME: sentrybuilder
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GEM_HOST_API_KEY: ${{ secrets.GEM_HOST_API_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          NUGET_API_TOKEN: ${{ secrets.NUGET_API_TOKEN }}
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          PUBDEV_ACCESS_TOKEN: ${{ secrets.PUBDEV_ACCESS_TOKEN }}
-          PUBDEV_REFRESH_TOKEN: ${{ secrets.PUBDEV_REFRESH_TOKEN }}
+      #- uses: docker://getsentry/craft:latest
+      #  name: Publish using Craft
+      #  with:
+      #    entrypoint: /bin/bash
+      #    args: >-
+      #      -e
+      #      -c "
+      #      cd __repo__/${{ fromJSON(steps.inputs.outputs.result).path }};
+      #      exec craft publish ${{ fromJSON(steps.inputs.outputs.result).version }};
+      #      "
+      #  env:
+      #    CRAFT_MERGE_TARGET: ${{ fromJSON(steps.inputs.outputs.result).merge_target }}
+      #    CRAFT_LOG_LEVEL: ${{ secrets.CRAFT_LOG_LEVEL }}
+      #    CRAFT_DRY_RUN: ${{ fromJSON(steps.inputs.outputs.result).dry_run }}
+      #    GIT_COMMITTER_NAME: getsentry-bot
+      #    GIT_AUTHOR_NAME: getsentry-bot
+      #    EMAIL: bot@getsentry.com
+      #    GITHUB_API_TOKEN: ${{ secrets.GH_SENTRY_BOT_PAT }}
+      #    COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+      #    CRAFT_GCS_TARGET_CREDS_JSON: ${{ secrets.CRAFT_GCS_TARGET_CREDS_JSON }}
+      #    CRAFT_GCS_STORE_CREDS_JSON: ${{ secrets.CRAFT_GCS_STORE_CREDS_JSON }}
+      #    CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      #    DOCKER_USERNAME: sentrybuilder
+      #    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      #    TWINE_USERNAME: __token__
+      #    TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      #    NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #    GEM_HOST_API_KEY: ${{ secrets.GEM_HOST_API_KEY }}
+      #    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #    NUGET_API_TOKEN: ${{ secrets.NUGET_API_TOKEN }}
+      #    GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      #    GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      #    OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      #    OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+      #    PUBDEV_ACCESS_TOKEN: ${{ secrets.PUBDEV_ACCESS_TOKEN }}
+      #    PUBDEV_REFRESH_TOKEN: ${{ secrets.PUBDEV_REFRESH_TOKEN }}
 
-      - name: Update completed targets and remove label
-        if: ${{ cancelled() || failure() }}
-        uses: actions/github-script@v5
-        env:
-          PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
-        with:
-          script: |
-            const Sentry = require('@sentry/node');
-            const inputs = JSON.parse(process.env.PUBLISH_ARGS);
-            const updateIssue = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/update-issue.js`).default;
-            return await updateIssue({context, github, inputs});
+      #- name: Update completed targets and remove label
+      #  if: ${{ cancelled() || failure() }}
+      #  uses: actions/github-script@v5
+      #  env:
+      #    PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    script: |
+      #      const Sentry = require('@sentry/node');
+      #      const inputs = JSON.parse(process.env.PUBLISH_ARGS);
+      #      const updateIssue = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/update-issue.js`).default;
+      #      return await updateIssue({context, github, inputs});
 
-      - name: Inform about cancellation
-        if: ${{ cancelled() }}
-        uses: actions/github-script@v5
-        env:
-          PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
-        with:
-          script: |
-            const Sentry = require('@sentry/node');
-            const inputs = JSON.parse(process.env.PUBLISH_ARGS);
-            const cancelled = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/cancelled.js`).default;
-            return await cancelled({context, github, inputs, Sentry});
+      #- name: Inform about cancellation
+      #  if: ${{ cancelled() }}
+      #  uses: actions/github-script@v5
+      #  env:
+      #    PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    script: |
+      #      const Sentry = require('@sentry/node');
+      #      const inputs = JSON.parse(process.env.PUBLISH_ARGS);
+      #      const cancelled = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/cancelled.js`).default;
+      #      return await cancelled({context, github, inputs, Sentry});
 
-      - name: Inform about failure
-        if: ${{ failure() }}
-        uses: actions/github-script@v5
-        env:
-          PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
-        with:
-          script: |
-            const Sentry = require('@sentry/node');
-            const inputs = JSON.parse(process.env.PUBLISH_ARGS);
-            const failure = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/failure.js`).default;
-            return await failure({context, github, inputs, Sentry});
+      #- name: Inform about failure
+      #  if: ${{ failure() }}
+      #  uses: actions/github-script@v5
+      #  env:
+      #    PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    script: |
+      #      const Sentry = require('@sentry/node');
+      #      const inputs = JSON.parse(process.env.PUBLISH_ARGS);
+      #      const failure = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/failure.js`).default;
+      #      return await failure({context, github, inputs, Sentry});
 
-      - name: Close on success
-        if: ${{ success() }}
-        uses: actions/github-script@v5
-        env:
-          PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
-        with:
-          script: |
-            const Sentry = require('@sentry/node');
-            const inputs = JSON.parse(process.env.PUBLISH_ARGS);
-            const success = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/success.js`).default;
-            return await success({context, github, inputs, Sentry});
+      #- name: Close on success
+      #  if: ${{ success() }}
+      #  uses: actions/github-script@v5
+      #  env:
+      #    PUBLISH_ARGS: ${{ steps.inputs.outputs.result }}
+      #  with:
+      #    script: |
+      #      const Sentry = require('@sentry/node');
+      #      const inputs = JSON.parse(process.env.PUBLISH_ARGS);
+      #      const success = require(`${process.env.GITHUB_WORKSPACE}/.__publish__/src/publish/success.js`).default;
+      #      return await success({context, github, inputs, Sentry});
